@@ -12,6 +12,7 @@ from lib import timetracking
 from lib import subissues
 from lib import export_import
 from lib import google_calendar
+from lib import exportprep
 from utils.smart_argparse_formatter import SmartFormatter
 
 import jiraconfig as conf
@@ -50,6 +51,11 @@ def list_epics_stories_and_tasks_for_jql(jira, args):
     print(results)
 
 list_epics_stories_and_tasks_for_jql.argparser = _make_jql_argument_parser
+
+def exportprep_all(jira, args):
+    import exportimportconfig
+    exportprep.exportprep_files(jira,exportimportconfig)
+    print("woohoo")
 
 def export_import_issues_for_jql(jira, args):
     """Export issues from one JIRA instance

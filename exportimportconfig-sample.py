@@ -73,4 +73,8 @@ STATUS_TRANSITIONS = {
 
 ADD_COMMENT_TO_OLD_ISSUE = True
 
+CUSTOM_FIELD_MAP = {
+    'customfield_sourcenum': 'customfield_targetnum',
+}
+
 CUSTOM_FIELD = ('customfield_11086', {'value': 'Custom value'})
