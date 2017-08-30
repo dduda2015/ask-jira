@@ -55,7 +55,6 @@ list_epics_stories_and_tasks_for_jql.argparser = _make_jql_argument_parser
 def exportprep_all(jira, args):
     import exportimportconfig
     exportprep.exportprep_files(jira,exportimportconfig)
-    print("woohoo")
 
 def export_import_issues_for_jql(jira, args):
     """Export issues from one JIRA instance
