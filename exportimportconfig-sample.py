@@ -73,8 +73,13 @@ STATUS_TRANSITIONS = {
 
 ADD_COMMENT_TO_OLD_ISSUE = True
 
+# field types need to be aligned between systems in order to map custom fields
 CUSTOM_FIELD_MAP = {
     'customfield_sourcenum': 'customfield_targetnum',
 }
+
+# List Target Issue types that should map custom fields (usually just story or bug)
+CUSTOM_FIELD_ISSUETYPES = ['Story','Bug']
+
 
 CUSTOM_FIELD = ('customfield_11086', {'value': 'Custom value'})

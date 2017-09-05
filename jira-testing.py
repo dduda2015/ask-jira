@@ -76,14 +76,23 @@ def _create_issue(jira, issue_dict):
 def _print_issuefields(jira,issuekey,conf):
     issue=jira.issue(issuekey)
     fields=issue.fields
-    print(fields.timeoriginalestimate)
+    #print(fields.timeoriginalestimate)
     for field in (vars(fields)):
         if not field == '__dict__':
-            print(field," : ",getattr(fields,field))
+            a=None
+            #print(field," : ",getattr(fields,field))
+        if field =='timetracking' :
+            timetracking={}
+            for name in ['timeSpent', 'originalEstimate', 'remainingEstimate']:
+                try:
+                    timetracking[name] = str(getattr(fields.timetracking, name))
+                except AttributeError:
+                    a = None
+            print(timetracking)
     result={}
     print('-----------------------------------------------------------')
     for name in conf.CUSTOM_FIELD_MAP:
-        if hasattr(fields, name):
+        if hasattr(fields,name):
             field = getattr(fields, name)
             if hasattr(field, 'value'):
                 result[conf.CUSTOM_FIELD_MAP[name]]={'value': field.value}
@@ -106,7 +115,10 @@ issue_dict= {
     'reporter':{'name':'adam.cardarelli'},
     'assignee':{'name':'steven.schiff'},
     'customfield_11761':'Defect',
-
+    'timetracking':{
+        'remainingEstimate':'4d',
+        'originalEstimate':'5d',
+    }
 }
 jira = JIRA({'server': CONF['server']},
                 basic_auth=(CONF['user'], CONF['password']))
@@ -118,4 +130,4 @@ redijira=JIRA({'server': CONF_REDI['server']},
 #_getUsers(jira,CONF)
 #_searchIssues(jira,"project=REDITEMP and issuetype='Story'","customfield_12544")
 #_getfields(jira,redijira)
-_print_issuefields(redijira,'DEV-20288',exportimportconfig)
+_print_issuefields(jira,'ATS-550',exportimportconfig)

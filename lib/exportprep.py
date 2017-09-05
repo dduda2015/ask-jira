@@ -14,7 +14,7 @@ def exportprep_files(source_jira, conf):
     source_project=conf.JIRA['source_project']
 
     if _checkcustomfieldmap(source_jira, target_jira, conf):
-        print("Custome field map check complete")
+        print("Custom field map check complete")
 
     if _checktypes(source_jira, target_jira,conf):
         print("Issuetype map verified.")
@@ -129,10 +129,7 @@ def _checkcustomfieldmap(source, target,conf):
         if not entry in source_fieldids:
             print(entry,"not present in source jira")
             success=False
-        else:
-            print (entry,":",source_fieldnames[source_fieldids.index(entry)])
         if not conf.CUSTOM_FIELD_MAP[entry] in target_fieldids:
             print(entry,"not present in target jira")
             success=False
-        else:
-            print (conf.CUSTOM_FIELD_MAP[entry],":",target_fieldnames[target_fieldids.index(conf.CUSTOM_FIELD_MAP[entry])])
+    return success

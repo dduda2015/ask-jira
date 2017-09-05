@@ -2,6 +2,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import unicodedata
+import pickle
 from io import BytesIO
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -10,10 +11,20 @@ from jira.exceptions import JIRAError
 def export_import_issues(source_jira, conf, query):
     target_jira = JIRA({'server': conf.JIRA['server']},
                        basic_auth=(conf.JIRA['user'], conf.JIRA['password']))
-    issues = source_jira.search_issues(query, maxResults=False)
+    index = 0
     result = []
-    print('About to export/import', len(issues), 'issues')
-    _make_new_issues(source_jira, target_jira, issues, conf, result, None)
+    issues = source_jira.search_issues(query, startAt=index, maxResults=False)
+    total = issues.total
+    counter = total
+    while index < total:
+        print('About to export/import', len(issues),'of',total,".\n",counter,'remaining issues')
+        _make_new_issues(source_jira, target_jira, issues, conf, result, None)
+        index += 50
+        counter-=50
+        issues = source_jira.search_issues(query, startAt=index, maxResults=False)
+    epic_map_file=open("epicmap","wb+")
+    pickle.dump(_g_epic_map,epic_map_file)
+    epic_map_file.close()
     return result
 
 
@@ -97,6 +108,15 @@ def _get_new_issue_fields(fields, conf):
     result['versions']=versions
 
     if result['issuetype'] in conf.CUSTOM_FIELD_ISSUETYPES:
+        timetracking={}
+        for name in ['timeSpent','originalEstimate','remainingEstimate']:
+            try:
+                timetracking[name]=str(getattr(fields.timetracking,name))
+            except (AttributeError,TypeError):
+                a=None
+        result['timetracking']=timetracking
+
+    if result['issuetype'] in conf.CUSTOM_FIELD_ISSUETYPES:
         for name in conf.CUSTOM_FIELD_MAP:
             if hasattr(fields, name):
                 field = getattr(fields, name)
@@ -118,6 +138,16 @@ def _get_new_issue_fields(fields, conf):
 
 
 _g_epic_map = {}
+try:
+    epic_map_file=open("epicmap","rb")
+    _g_epic_map = pickle.loads(epic_map_file.read())
+    epic_map_file.close()
+except IOError:
+    print('Epic Map not found')
+
+
+
+
 
 
 def _set_epic_link(new_issue, old_issue, conf, source_jira, target_jira):
@@ -133,10 +163,11 @@ def _set_epic_link(new_issue, old_issue, conf, source_jira, target_jira):
             source_epic.fields, conf.SOURCE_EPIC_NAME_FIELD_ID)
         target_epic = target_jira.create_issue(fields=epic_fields)
         _set_status(target_epic,source_epic, conf, target_jira)
-        _g_epic_map[source_epic_key] = target_epic
+        _g_epic_map[source_epic_key] = str(target_epic)
     target_epic = _g_epic_map[source_epic_key]
-    target_jira.add_issues_to_epic(target_epic.key, [new_issue.key])
-    print('linked to epic', target_epic.key, '...', end=' ')
+    print(type(source_epic_key), type(target_epic))
+    target_jira.add_issues_to_epic(target_epic, [new_issue.key])
+    print('linked to epic', target_epic, '...', end=' ')
 
 
 def _set_status(new_issue, old_issue, conf, target_jira):

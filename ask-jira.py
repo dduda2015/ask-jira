@@ -53,6 +53,8 @@ def list_epics_stories_and_tasks_for_jql(jira, args):
 list_epics_stories_and_tasks_for_jql.argparser = _make_jql_argument_parser
 
 def exportprep_all(jira, args):
+    """Check export configuration for map accuracy and add versions, components
+    that are missing. """
     import exportimportconfig
     exportprep.exportprep_files(jira,exportimportconfig)
 
