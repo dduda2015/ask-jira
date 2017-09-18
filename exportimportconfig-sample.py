@@ -1,3 +1,4 @@
+# Copy this file to exportimportconfig.py to use
 from collections import namedtuple
 
 JIRA = {
@@ -81,5 +82,5 @@ CUSTOM_FIELD_MAP = {
 # List Target Issue types that should map custom fields (usually just story or bug)
 CUSTOM_FIELD_ISSUETYPES = ['Story','Bug']
 
-
+#Set a custom field to a default value
 CUSTOM_FIELD = ('customfield_11086', {'value': 'Custom value'})
