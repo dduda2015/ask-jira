@@ -2,7 +2,6 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import unicodedata
-import pickle
 from io import BytesIO
 from jira.client import JIRA
 from jira.exceptions import JIRAError
@@ -22,9 +21,6 @@ def export_import_issues(source_jira, conf, query):
         index += 50
         counter-=50
         issues = source_jira.search_issues(query, startAt=index, maxResults=False)
-    epic_map_file=open("epicmap","wb+")
-    pickle.dump(_g_epic_map,epic_map_file)
-    epic_map_file.close()
     return result
 
 
@@ -40,7 +36,8 @@ def _make_new_issues(source_jira, target_jira, issues, conf, result, parent):
         new_issue = target_jira.create_issue(fields=fields)
         if not parent:
             print('to', new_issue.key, '...', end=' ')
-
+        with open("savedates.csv",'a') as out:
+            out.write(str(issue.key)+","+new_issue.key+","+str(issue.fields.created)+","+str(issue.fields.updated)+"\n")
         _set_epic_link(new_issue, issue, conf, source_jira, target_jira)
         _set_status(new_issue, issue, conf, target_jira)
 
@@ -100,6 +97,8 @@ def _get_new_issue_fields(fields, conf):
     components=[]
     for component in fields.components:
         components.append({'name':getattr(component, 'name')})
+    if len(components) == 0 :
+        components.append({'name':'None'})
     result['components']=components
 
     versions=[]
@@ -133,21 +132,19 @@ def _get_new_issue_fields(fields, conf):
 
     if conf.CUSTOM_FIELD:
         result[conf.CUSTOM_FIELD[0]] = conf.CUSTOM_FIELD[1]
-    #print(result.items())
     return result
 
 
 _g_epic_map = {}
 try:
-    epic_map_file=open("epicmap","rb")
-    _g_epic_map = pickle.loads(epic_map_file.read())
+    epic_map_file=open("epicmap.txt","a")
+    epics_to_add = epic_map_file.readlines()
+    for line in epics_to_add:
+        linepair = line.split()
+        _g_epic_map[linepair[0]] = linepair[1]
     epic_map_file.close()
 except IOError:
     print('Epic Map not found')
-
-
-
-
 
 
 def _set_epic_link(new_issue, old_issue, conf, source_jira, target_jira):
@@ -156,23 +153,33 @@ def _set_epic_link(new_issue, old_issue, conf, source_jira, target_jira):
         return
     global _g_epic_map
     if source_epic_key not in _g_epic_map:
-        source_epic = source_jira.issue(source_epic_key)
+        try:
+            source_epic = source_jira.issue(source_epic_key)
+        except JIRAError as e:
+            print('ERROR: Source Link Invalid, cannot link issue',
+                  e.status_code, '...', end=' ')
+            return
         epic_fields = _get_new_issue_fields(source_epic.fields, conf)
-        print(epic_fields)
         epic_fields[conf.TARGET_EPIC_NAME_FIELD_ID] = getattr(
             source_epic.fields, conf.SOURCE_EPIC_NAME_FIELD_ID)
         target_epic = target_jira.create_issue(fields=epic_fields)
         _set_status(target_epic,source_epic, conf, target_jira)
         _g_epic_map[source_epic_key] = str(target_epic)
+        with open("epicsave.txt",'a') as out:
+            out.write(str(source_epic_key)+" "+str(target_epic)+"\n")
     target_epic = _g_epic_map[source_epic_key]
-    print(type(source_epic_key), type(target_epic))
     target_jira.add_issues_to_epic(target_epic, [new_issue.key])
     print('linked to epic', target_epic, '...', end=' ')
 
 
 def _set_status(new_issue, old_issue, conf, target_jira):
     status_name = old_issue.fields.status.name
-    transitions = conf.STATUS_TRANSITIONS[status_name]
+    try:
+        transitions = conf.STATUS_TRANSITIONS[status_name]
+    except KeyError as e:
+        print('ERROR: Issue transition invalid, cant transition issue',
+               '...', end=' ')
+        return
     if not transitions:
         return
     for transition_name in transitions:
@@ -187,9 +194,12 @@ def _set_status(new_issue, old_issue, conf, target_jira):
 
 def _add_comments(issue, jira, comments):
     for comment in comments:
-        jira.add_comment(issue, u"*Comment by {0}*:\n{1}"
-                         .format(comment.author.displayName, comment.body))
-
+        try:
+            jira.add_comment(issue, u"*Comment by {0}*:\n{1}"
+                             .format(comment.author.displayName, comment.body))
+        except JIRAError as e:
+            print('ERROR: Source Link Invalid, cannot link issue',
+                  e.status_code, '...', end=' ')
 
 def _add_attachments(issue, jira, attachments):
     for attachment in attachments:

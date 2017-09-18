@@ -76,7 +76,7 @@ def _create_issue(jira, issue_dict):
 def _print_issuefields(jira,issuekey,conf):
     issue=jira.issue(issuekey)
     fields=issue.fields
-    #print(fields.timeoriginalestimate)
+    print('created:',getattr(fields,'created'))
     for field in (vars(fields)):
         if not field == '__dict__':
             a=None
@@ -106,28 +106,21 @@ def _print_issuefields(jira,issuekey,conf):
 #    print(result)
 
 issue_dict= {
-    'project': 'REDITEMP',
+    'project': 'PCBE',
     'summary': 'Test Issue',
     'description':'Testing testing 123',
-    'issuetype': {'name':'Story'},
-    'fixVersions': [{'name':'ToolsDepot-7.0.0'},{'name':'CL52208'}],
-    'components':[{'name':'CET'},{'name':'API'}],
-    'reporter':{'name':'adam.cardarelli'},
-    'assignee':{'name':'steven.schiff'},
-    'customfield_11761':'Defect',
-    'timetracking':{
-        'remainingEstimate':'4d',
-        'originalEstimate':'5d',
+    'issuetype': {'name':'Epic'},
+    'components':[{'name':'Algos'},{'name':'AppServer'}],
+    'created':'2017-06-01T23:40:43.000+0000',
     }
-}
+
 jira = JIRA({'server': CONF['server']},
                 basic_auth=(CONF['user'], CONF['password']))
-
 redijira=JIRA({'server': CONF_REDI['server']},
                 basic_auth=(CONF_REDI['user'], CONF_REDI['password']))
-#_create_issue(jira, issue_dict)
+_create_issue(jira, issue_dict)
 #_getProjects(jira)
 #_getUsers(jira,CONF)
 #_searchIssues(jira,"project=REDITEMP and issuetype='Story'","customfield_12544")
 #_getfields(jira,redijira)
-_print_issuefields(jira,'ATS-550',exportimportconfig)
+#_print_issuefields(jira,'ATS-550',exportimportconfig)
