@@ -4,3 +4,5 @@
 #exportimportconfig.py
 worklogconfig.py
 venv/
+*.txt
+*.csv
