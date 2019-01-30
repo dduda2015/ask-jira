@@ -33,6 +33,12 @@ def _make_new_issues(source_jira, target_jira, issues, conf, result, parent):
         fields = _get_new_issue_fields(issue.fields, conf)
         if parent:
             fields['parent'] = {'key': parent.key}
+	#dduda - edit
+	print("---- source fields ----")
+	print (getattr(issue.fields,'assignee'))
+	print (dir(issue.fields))
+	print ("---- target fields use for creation ---")
+	print (fields)
         new_issue = target_jira.create_issue(fields=fields)
         if not parent:
             print('to', new_issue.key, '...', end=' ')
@@ -79,6 +85,12 @@ def _get_new_issue_fields(fields, conf):
     for name in ('priority','issuetype','reporter','assignee'):
         if hasattr(fields, name):
             field = getattr(fields, name)
+	    print ("CHECKING for "+name)
+	    print (getattr(field,'name'))
+	    try:
+		print (dict(field))
+	    except:
+		pass
             try:
                 value = getattr(field,'name')
             except AttributeError:
@@ -88,11 +100,23 @@ def _get_new_issue_fields(fields, conf):
                 result[name] = {'name': name_map[value]}
             except KeyError:
                 if name == 'reporter':
-                    result[name] = {'name': conf.JIRA['user']}
+                    #result[name] = {'name': conf.JIRA['user']}
+		    #Create/manage name map
+		    if getattr(conf,'ATTEMPT_ORIGINAL_USER_IF_NOT_IN_MAP') == True:
+		      print ("Using source user information for reporter")
+                      result[name] = {'name': value}
+		    else:
+	              result[name] = {'name': conf.JIRA['user']}
                 elif name == 'priority':
                     result[name] = {'name': 'Minor'}
                 elif name == 'assignee':
-                    result[name] = {'name':''}
+		    #print ("I AM THE ASSINGEE")
+		    #print (fields.assignee)
+		    if getattr(conf,'ATTEMPT_ORIGINAL_USER_IF_NOT_IN_MAP') == True:
+		      print ("Using source user information for assignee")
+                      result[name] = {'name': value}
+		    else:
+	              result[name] = {'name': conf.JIRA['user']}
 
     components=[]
     for component in fields.components:
@@ -106,6 +130,11 @@ def _get_new_issue_fields(fields, conf):
         versions.append({'name':getattr(version, 'name')})
     result['versions']=versions
 
+    #fixversions=[]
+    #for version in fields.fixVersions:
+    #  fixversions.append({'name':getattr(version, 'name')})
+    #result['fixversions']=fixversions
+
     if result['issuetype'] in conf.CUSTOM_FIELD_ISSUETYPES:
         timetracking={}
         for name in ['timeSpent','originalEstimate','remainingEstimate']:
@@ -115,21 +144,25 @@ def _get_new_issue_fields(fields, conf):
                 a=None
         result['timetracking']=timetracking
 
-    if result['issuetype'] in conf.CUSTOM_FIELD_ISSUETYPES:
-        for name in conf.CUSTOM_FIELD_MAP:
-            if hasattr(fields, name):
-                field = getattr(fields, name)
+#Not sure if statement below is needed?  result['issuetype'] is name -> value, not value, so if statement should be corrected if valid
+    #if result['issuetype'] in conf.CUSTOM_FIELD_ISSUETYPES:
+    print ("---- hi, trying match fields based on issue types ----")
+    for name in conf.CUSTOM_FIELD_MAP:
+        if hasattr(fields, name):
+            field = getattr(fields, name)
 
-                if hasattr(field, 'value'):
-                    result[conf.CUSTOM_FIELD_MAP[name]] = {'value': field.value}
-                elif hasattr(field, 'name'):
-                    try:
-                        result[conf.CUSTOM_FIELD_MAP[name]] = {'name': conf.ASSIGNEE_MAP[field.name]}
-                    except KeyError:
-                        result[conf.CUSTOM_FIELD_MAP[name]] = {'name': None}
-                else:
-                    result[conf.CUSTOM_FIELD_MAP[name]] = field
+            if hasattr(field, 'value'):
+                result[conf.CUSTOM_FIELD_MAP[name]] = {'value': field.value}
+            elif hasattr(field, 'name'):
+                try:
+                    result[conf.CUSTOM_FIELD_MAP[name]] = {'name': conf.ASSIGNEE_MAP[field.name]}
+                except KeyError:
+                    result[conf.CUSTOM_FIELD_MAP[name]] = {'name': None}
+            else:
+                result[conf.CUSTOM_FIELD_MAP[name]] = field
 
+#    print ("--- Custom field map: "+str(getattr(conf,'CUSTOM_FIELD_MAP')))
+    print ("--- Custom field map: "+str(conf.CUSTOM_FIELD_MAP))
     if conf.CUSTOM_FIELD:
         result[conf.CUSTOM_FIELD[0]] = conf.CUSTOM_FIELD[1]
     return result

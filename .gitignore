@@ -1,6 +1,6 @@
 *.pyc
 *.swp
-jiraconfig.py
-exportimportconfig.py
+#jiraconfig.py
+#exportimportconfig.py
 worklogconfig.py
 venv/
