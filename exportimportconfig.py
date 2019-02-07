@@ -79,11 +79,14 @@ RESOLUTION_MAP = {
 
 STATUS_TRANSITIONS = {
     'Open': None,
-    'Reopened': None,
-    'In Progress': ('Start Coding'),
+    'Reopened': ('Reopened'), 
+#    'Reopened': None,
+    'QA Verified': ('Verified'),
+#    'In Progress': ('Start Coding'),
+    'In Progress': ('In Progress'),
     'In Testing': ('Start Coding', 'Close'),
-    'Resolved': ('Start Coding', WithResolution('Close')),
-    'Closed': ('Start Coding', WithResolution('Close')),
+    'Resolved': (WithResolution('Resolved')),
+    'Closed': (WithResolution('Close')),
 }
 
 ADD_COMMENT_TO_OLD_ISSUE = False 

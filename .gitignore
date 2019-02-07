@@ -6,3 +6,4 @@ worklogconfig.py
 venv/
 *.txt
 *.csv
+*.log

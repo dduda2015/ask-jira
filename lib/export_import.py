@@ -86,7 +86,7 @@ def _get_new_issue_fields(fields, conf):
         if hasattr(fields, name):
             field = getattr(fields, name)
 	    print ("CHECKING for "+name)
-	    print (getattr(field,'name'))
+	    #print (getattr(field,'name'))
 	    try:
 		print (dict(field))
 	    except:
@@ -130,10 +130,11 @@ def _get_new_issue_fields(fields, conf):
         versions.append({'name':getattr(version, 'name')})
     result['versions']=versions
 
-    #fixversions=[]
-    #for version in fields.fixVersions:
-    #  fixversions.append({'name':getattr(version, 'name')})
-    #result['fixversions']=fixversions
+    fixversions=[]
+    for version in fields.fixVersions:
+      fixversions.append({'name':getattr(version, 'name')})
+      print ("FIXVERSION"+str(fixversions))
+    result['fixVersions']=fixversions
 
     if result['issuetype'] in conf.CUSTOM_FIELD_ISSUETYPES:
         timetracking={}
@@ -215,6 +216,8 @@ def _set_status(new_issue, old_issue, conf, target_jira):
         return
     if not transitions:
         return
+    if isinstance(transitions, str): 
+	transitions = [transitions]
     for transition_name in transitions:
         if isinstance(transition_name, conf.WithResolution):
             resolution = conf.RESOLUTION_MAP[old_issue.fields.resolution.name]
